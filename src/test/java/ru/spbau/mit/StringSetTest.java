@@ -33,10 +33,10 @@ public class StringSetTest {
 
     @BeforeClass
     static public void prepare() {
-        final int N = 10000;
-        final int SUB_N = N / 10;
-        final int N1 = 1000;
-        final int MAX_LEN = 100;
+        final int N = 1000;
+        final int SUB_N = N / 2;
+        final int N1 = 300;
+        final int MAX_LEN = 500;
         final int MIN_LEN = 1;
 
         stringsDict = new HashSet<>(N);
@@ -101,7 +101,7 @@ public class StringSetTest {
 
     @Test
     public void testWordsNumWithPrefix() {
-        final int TN = 100;
+        final int TN = 50;
         for (int i = 0; i < TN; i++) {
             strSet = new StringSetImpl();
             int expected = 0;
@@ -117,12 +117,22 @@ public class StringSetTest {
     }
 
     @Test
-    public void testSpecialCases() {
+    public void testSpecialCases1() {
         assertEquals(strSet.size(), 0);
-        assertFalse(strSet.add(""));
-        assertFalse(strSet.remove(""));
+        assertTrue(strSet.add(""));
+        assertTrue(strSet.remove(""));
         assertFalse(strSet.remove("dsdsd"));
     }
+
+    @Test
+    public void testSpecialCases2() {
+        for (String s : stringsDict) {
+            strSet.add(s);
+        }
+        assertEquals(strSet.size(), strSet.howManyStartsWithPrefix(""));
+    }
+
+
 
     @Test(expected = Exception.class)
     public void testBadStringAdded() {

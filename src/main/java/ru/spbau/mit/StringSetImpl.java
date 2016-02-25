@@ -7,7 +7,7 @@ package ru.spbau.mit;
 public class StringSetImpl implements StringSet {
     @Override
     public boolean add(String element) {
-        if (element.isEmpty() || contains(element)) {
+        if (contains(element)) {
             return false;
         }
         TrieNode node = find(element, ADD_WORD_STRATEGY);
