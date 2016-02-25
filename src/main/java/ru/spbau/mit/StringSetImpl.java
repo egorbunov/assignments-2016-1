@@ -1,43 +1,88 @@
 package ru.spbau.mit;
 
-import java.util.HashSet;
-import java.util.Set;
-
 /**
  * Created by Egor Gorbunov on 16.02.16.
  * email: egor-mailbox@ya.ru
  */
 public class StringSetImpl implements StringSet {
-    private Set<String> stringHashSet = new HashSet<>();
-
     @Override
     public boolean add(String element) {
-        return stringHashSet.add(element);
+        if (element.isEmpty() || contains(element)) {
+            return false;
+        }
+        TrieNode node = find(element, ADD_WORD_STRATEGY);
+        assert node != null;
+        node.incWordsInSubtree();
+        node.setWord(true);
+        return true;
     }
 
     @Override
     public boolean contains(String element) {
-        return stringHashSet.contains(element);
+        TrieNode node = find(element, SIMPLE_STRATEGY);
+        return node != null && node.isWord();
     }
 
     @Override
     public boolean remove(String element) {
-        return stringHashSet.remove(element);
+        if (!contains(element)) {
+            return false;
+        }
+        TrieNode node = find(element, DELETE_WORD_STRATEGY);
+        node.decWordsInSubtree();
+        node.setWord(false);
+        return true;
     }
 
     @Override
     public int size() {
-        return stringHashSet.size();
+        return root.getWordsInSubtree();
     }
 
     @Override
     public int howManyStartsWithPrefix(String prefix) {
-        int cnt = 0;
-        for (String x : stringHashSet) {
-            if (x.startsWith(prefix)) {
-                cnt += 1;
-            }
+        TrieNode node = find(prefix, SIMPLE_STRATEGY);
+        if (node == null) {
+            return 0;
         }
-        return cnt;
+        return node.getWordsInSubtree();
     }
+
+    private TrieNode root = new TrieNode();
+
+    private TrieNode find(String str, GoStrategy strategy) {
+        TrieNode cur = root;
+        for (int i = 0; cur != null && i < str.length(); i++) {
+            cur = strategy.go(cur, str.charAt(i));
+        }
+        return cur;
+    }
+
+    private interface GoStrategy {
+        TrieNode go(TrieNode from, char c);
+    }
+
+    private static final GoStrategy SIMPLE_STRATEGY = new GoStrategy() {
+        @Override
+        public TrieNode go(TrieNode from, char c) {
+            return from.get(c);
+        }
+    };
+    private static final GoStrategy ADD_WORD_STRATEGY = new GoStrategy() {
+        @Override
+        public TrieNode go(TrieNode from, char c) {
+            from.incWordsInSubtree();
+            if (from.get(c) == null) {
+                from.set(c, new TrieNode());
+            }
+            return from.get(c);
+        }
+    };
+    private static final GoStrategy DELETE_WORD_STRATEGY = new GoStrategy() {
+        @Override
+        public TrieNode go(TrieNode from, char c) {
+            from.decWordsInSubtree();
+            return from.get(c);
+        }
+    };
 }
