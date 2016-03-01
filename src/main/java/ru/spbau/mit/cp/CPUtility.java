@@ -10,51 +10,32 @@ public class CPUtility {
 
     private static int MAX_BUFFER_SIZE = 8192;
 
-    private static String copyFile(String from, String to) {
+    private static void copyFile(String from, String to) throws IOException {
         BufferedInputStream br;
         BufferedOutputStream bw;
-        try {
-            br = new BufferedInputStream(new FileInputStream(from), MAX_BUFFER_SIZE);
-        } catch (FileNotFoundException e) {
-            return "ERROR: Can't open file to copy from: [ " + from + " ]";
-        }
-
-        try {
-            bw = new BufferedOutputStream(new FileOutputStream(to), MAX_BUFFER_SIZE);
-        } catch (IOException e) {
-            return "ERROR: Can't open destination file: [ " + to + " ]";
-        }
+        br = new BufferedInputStream(new FileInputStream(from), MAX_BUFFER_SIZE);
+        bw = new BufferedOutputStream(new FileOutputStream(to), MAX_BUFFER_SIZE);
 
         byte[] buffer = new byte[MAX_BUFFER_SIZE];
-        try {
-            while (true) {
-                int n = br.read(buffer);
-                if (n < 0) {
-                    break;
-                }
-                bw.write(buffer, 0, n);
+        while (true) {
+            int n = br.read(buffer);
+            if (n < 0) {
+                break;
             }
-            br.close();
-            bw.close();
-        } catch (IOException e) {
-            return "ERROR: Fail during copy.";
+            bw.write(buffer, 0, n);
         }
-
-
-        return null;
+        br.close();
+        bw.close();
     }
 
 
     public static void main(String[] args) {
-        String result;
         try {
-            result = copyFile(args[0], args[1]);
+            copyFile(args[0], args[1]);
         } catch (IndexOutOfBoundsException e) {
-            result = "ERROR: wrong command line arguments";
-        }
-
-        if (result != null) {
-            System.out.println(result);
+            System.out.println("ERROR: wrong command line arguments");
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }
