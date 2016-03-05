@@ -82,7 +82,13 @@ public class StringSetImpl implements StringSet {
         @Override
         public TrieNode go(TrieNode from, char c) {
             from.decWordsInSubtree();
-            return from.get(c);
+            TrieNode toReturn = from.get(c);
+            if (from.getWordsInSubtree() == 0) {
+                // case word to delete is alone in it's branch,
+                // this branch becomes free after word deletion
+                from.set(c, null);
+            }
+            return toReturn;
         }
     };
 }
