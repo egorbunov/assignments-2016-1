@@ -5,6 +5,8 @@ package ru.spbau.mit;
  * email: egor-mailbox@ya.ru
  */
 public class StringSetImpl implements StringSet {
+    private TrieNode root = new TrieNode();
+
     @Override
     public boolean add(String element) {
         if (contains(element)) {
@@ -47,8 +49,6 @@ public class StringSetImpl implements StringSet {
         }
         return node.getWordsInSubtree();
     }
-
-    private TrieNode root = new TrieNode();
 
     private TrieNode find(String str, GoStrategy strategy) {
         TrieNode cur = root;

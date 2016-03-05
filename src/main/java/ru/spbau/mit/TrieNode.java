@@ -5,6 +5,13 @@ package ru.spbau.mit;
  * email: egor-mailbox@ya.ru
  */
 class TrieNode {
+    private static final short ALPHABET_LEN = 'z' - 'a' + 1;
+    private static final short LETTER_NUM = 2 * ALPHABET_LEN;
+
+    private int wordsInSubtree = 0; // number of words in subtree, including this node
+    private boolean isWord = false; // true, if word ends on that node
+    private final TrieNode[] map = new TrieNode[LETTER_NUM];
+
     public TrieNode get(char c) {
         return map[idx(c)];
     }
@@ -42,11 +49,4 @@ class TrieNode {
             throw new IllegalArgumentException("Not alphabetic characters not supported!");
         }
     }
-
-    private int wordsInSubtree = 0; // number of words in subtree, including this node
-    private boolean isWord = false; // true, if word ends on that node
-    private final TrieNode[] map = new TrieNode[LETTER_NUM];
-
-    private static final short ALPHABET_LEN = 'z' - 'a' + 1;
-    private static final short LETTER_NUM = 2 * ALPHABET_LEN;
 }
