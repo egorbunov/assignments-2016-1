@@ -57,6 +57,8 @@ class TrieNode implements StreamSerializable {
     }
 
     public void reset() {
+        isWord = false;
+        wordsInSubtree = 0;
         for (char c : SUPPORTED_CHARACTERS) {
             set(c, null);
         }
@@ -72,7 +74,10 @@ class TrieNode implements StreamSerializable {
                 notNullCnt++;
             }
         }
-        byte isWordByte = (byte) (isWord ? 1 : 0);
+        byte isWordByte = 0;
+        if (isWord) {
+            isWordByte = 1;
+        }
         try {
             out.write(notNullCnt);
             out.write(isWordByte);
@@ -95,7 +100,9 @@ class TrieNode implements StreamSerializable {
             assert (notNullCnt != -1);
             wordsInSubtree = in.read();
             assert (wordsInSubtree != -1);
-            isWord = (wordsInSubtree == 1);
+            if (wordsInSubtree == 1) {
+                isWord = true;
+            }
             for (int i = 0; i < notNullCnt; ++i) {
                 char c = (char) in.read();
                 TrieNode newNode = new TrieNode();
