@@ -1,6 +1,5 @@
 package ru.spbau.mit;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -65,7 +64,7 @@ class TrieNode implements StreamSerializable {
 
     @Override
     public void serialize(OutputStream out) {
-        assert(Byte.MAX_VALUE >= map.length);
+        assert (Byte.MAX_VALUE >= map.length);
 
         byte notNullCnt = 0;
         for (TrieNode node : map) {
@@ -93,9 +92,9 @@ class TrieNode implements StreamSerializable {
     public void deserialize(InputStream in) {
         try {
             int notNullCnt = in.read();
-            assert(notNullCnt != -1);
+            assert (notNullCnt != -1);
             wordsInSubtree = in.read();
-            assert(wordsInSubtree != -1);
+            assert (wordsInSubtree != -1);
             isWord = (wordsInSubtree == 1);
             for (int i = 0; i < notNullCnt; ++i) {
                 char c = (char) in.read();
