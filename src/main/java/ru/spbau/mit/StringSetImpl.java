@@ -1,10 +1,13 @@
 package ru.spbau.mit;
 
+import java.io.InputStream;
+import java.io.OutputStream;
+
 /**
  * Created by Egor Gorbunov on 16.02.16.
  * email: egor-mailbox@ya.ru
  */
-public class StringSetImpl implements StringSet {
+public class StringSetImpl implements StringSet, StreamSerializable {
     private TrieNode root = new TrieNode();
 
     @Override
@@ -50,6 +53,17 @@ public class StringSetImpl implements StringSet {
         return node.getWordsInSubtree();
     }
 
+    @Override
+    public void serialize(OutputStream out) {
+        root.serialize(out);
+    }
+
+    @Override
+    public void deserialize(InputStream in) {
+        root.reset();
+        root.deserialize(in);
+    }
+
     private TrieNode find(String str, GoStrategy strategy) {
         TrieNode cur = root;
         for (int i = 0; cur != null && i < str.length(); i++) {
@@ -57,6 +71,8 @@ public class StringSetImpl implements StringSet {
         }
         return cur;
     }
+
+
 
     private interface GoStrategy {
         TrieNode go(TrieNode from, char c);
