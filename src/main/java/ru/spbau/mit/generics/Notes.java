@@ -17,6 +17,11 @@ public class Notes {
         y.addAll(x);
     }
 
+    public static <T> void myAddAll(Collection<? extends T> x, Collection<T> y) {
+        y.addAll(x);
+    }
+
+
     /**
      * That is very similar to {@code Collection<?>}
      */
@@ -42,5 +47,13 @@ public class Notes {
     }
 
     public static void main(String[] args) {
+        ArrayList<Integer> integers = new ArrayList<>();
+        ArrayList<Integer> ys = new ArrayList<Integer>() {{
+            add(1);
+            add(2);
+            add(3);
+        }};
+
+        myAddAll(ys, integers);
     }
 }
