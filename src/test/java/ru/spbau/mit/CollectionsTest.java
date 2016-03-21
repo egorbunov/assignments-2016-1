@@ -181,17 +181,17 @@ public class CollectionsTest {
         Assert.assertEquals(res, actual);
     }
 
-    /**
-     * Because of test coverage...
-     */
-    @Test
-    public void testCollectionsConstructorIsPrivate() throws NoSuchMethodException,
-            IllegalAccessException,
-            InvocationTargetException,
-            InstantiationException {
-        Constructor<Collections> constructor = Collections.class.getDeclaredConstructor();
-        Assert.assertTrue(Modifier.isPrivate(constructor.getModifiers()));
-        constructor.setAccessible(true);
-        constructor.newInstance();
-    }
+//    /**
+//     * Because of test coverage...
+//     */
+//    @Test
+//    public void testCollectionsConstructorIsPrivate() throws NoSuchMethodException,
+//            IllegalAccessException,
+//            InvocationTargetException,
+//            InstantiationException {
+//        Constructor<Collections> constructor = Collections.class.getDeclaredConstructor();
+//        Assert.assertTrue(Modifier.isPrivate(constructor.getModifiers()));
+//        constructor.setAccessible(true);
+//        constructor.newInstance();
+//    }
 }
