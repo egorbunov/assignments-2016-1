@@ -42,47 +42,48 @@ public class CollectionsTest {
 
 
     private static Random random = new Random();
-    private Set<String> numStrings;
-    private Set<Integer> numbers;
-    private Set<Integer> evenPart;
+    private Set<String> expectedNumStrs;
+    private Set<Integer> distinctNumbers;
+    private Set<Integer> expectedEvenPart;
 
     @Before
     public void prepare() {
         final int max = 10000;
         final int n = 5000;
-        numStrings = new HashSet<>();
-        numbers = new HashSet<>();
-        evenPart = new HashSet<>();
+        expectedNumStrs = new HashSet<>();
+        distinctNumbers = new HashSet<>();
+        expectedEvenPart = new HashSet<>();
         for (int i = 0; i < n; ++i) {
             int x = random.nextInt(2 * max) - max;
-            numbers.add(x);
-            numStrings.add(Integer.toString(x));
+            distinctNumbers.add(x);
+            expectedNumStrs.add(Integer.toString(x));
             if (IS_EVEN.apply(x)) {
-                evenPart.add(x);
+                expectedEvenPart.add(x);
             }
         }
     }
 
     @Test
     public void testMap() {
-        Collection<String> mapped = Collections.map(TO_STR, numbers);
-        Assert.assertEquals(numStrings.size(), mapped.size());
-        Assert.assertTrue(numStrings.containsAll(mapped));
+        Collection<String> mapped = Collections.map(TO_STR, distinctNumbers);
+        Assert.assertEquals(expectedNumStrs.size(), mapped.size());
+        Assert.assertTrue(expectedNumStrs.containsAll(mapped));
     }
 
     @Test
     public void testFilter() {
-        Collection<Integer> onlyEven = Collections.filter(IS_EVEN, numbers);
-        Assert.assertEquals(onlyEven.size(), evenPart.size());
-        Assert.assertTrue(evenPart.containsAll(onlyEven));
+        Collection<Integer> onlyEven = Collections.filter(IS_EVEN, distinctNumbers);
+        Assert.assertEquals(expectedEvenPart.size(), onlyEven.size());
+        Assert.assertTrue(expectedEvenPart.containsAll(onlyEven));
 
-        Assert.assertEquals(Collections.filter(Predicate.ALWAYS_FALSE, numbers).size(), 0);
-        Assert.assertEquals(Collections.filter(Predicate.ALWAYS_TRUE, numbers).size(), numbers.size());
+        Assert.assertEquals(0, Collections.filter(Predicate.ALWAYS_FALSE, distinctNumbers).size());
+        Assert.assertEquals(distinctNumbers.size(),
+                Collections.filter(Predicate.ALWAYS_TRUE, distinctNumbers).size());
     }
 
     @Test
     public void testTakeWhileAndUnless() {
-        Integer[] numArr = numbers.toArray(new Integer[numbers.size()]);
+        Integer[] numArr = distinctNumbers.toArray(new Integer[distinctNumbers.size()]);
         final List<Integer> numList = Arrays.asList(numArr);
         final int idx = random.nextInt(numList.size());
 
@@ -96,10 +97,11 @@ public class CollectionsTest {
         Collection<Integer> beforeIdx1 = Collections.takeWhile(pred.not(), numList);
         Collection<Integer> beforeIdx2 = Collections.takeUnless(pred, numList);
 
-        Assert.assertEquals(beforeIdx1.size(), idx);
-        Assert.assertEquals(beforeIdx2.size(), idx);
+        Assert.assertEquals(idx, beforeIdx1.size());
+        Assert.assertEquals(idx, beforeIdx2.size());
         Iterator<Integer> it1 = beforeIdx1.iterator();
         Iterator<Integer> it2 = beforeIdx2.iterator();
+
         for (int i = 0; i < idx; ++i) {
             Assert.assertEquals(numList.get(i), it1.next());
             Assert.assertEquals(numList.get(i), it2.next());
@@ -108,7 +110,7 @@ public class CollectionsTest {
 
     @Test
     public void testFoldl() {
-        Integer[] numArr = numbers.toArray(new Integer[numbers.size()]);
+        Integer[] numArr = distinctNumbers.toArray(new Integer[distinctNumbers.size()]);
         int ans = 0;
         for (Integer x : numArr) {
             ans -= x;
@@ -119,7 +121,7 @@ public class CollectionsTest {
 
     @Test
     public void testFoldr() {
-        Integer[] numArr = numbers.toArray(new Integer[numbers.size()]);
+        Integer[] numArr = distinctNumbers.toArray(new Integer[distinctNumbers.size()]);
         int ans = 0;
         for (int i = numArr.length - 1; i >= 0; i--) {
             ans = numArr[i] - ans;
@@ -132,18 +134,18 @@ public class CollectionsTest {
     public void testEmptyCollection() {
         List<Integer> emptyList = new ArrayList<>();
 
-        Assert.assertEquals(Collections.map(TO_STR, emptyList).size(), 0);
-        Assert.assertEquals(Collections.filter(Predicate.ALWAYS_TRUE, emptyList).size(), 0);
-        Assert.assertEquals(Collections.takeWhile(Predicate.ALWAYS_TRUE, emptyList).size(), 0);
-        Assert.assertEquals(Collections.takeUnless(Predicate.ALWAYS_FALSE, emptyList).size(), 0);
-        Assert.assertEquals((int) Collections.foldr(MY_SUBTRACT, 0, emptyList), 0);
-        Assert.assertEquals((int) Collections.foldl(MY_SUBTRACT, 0, emptyList), 0);
+        Assert.assertEquals(0, Collections.map(TO_STR, emptyList).size());
+        Assert.assertEquals(0, Collections.filter(Predicate.ALWAYS_TRUE, emptyList).size());
+        Assert.assertEquals(0, Collections.takeWhile(Predicate.ALWAYS_TRUE, emptyList).size());
+        Assert.assertEquals(0, Collections.takeUnless(Predicate.ALWAYS_FALSE, emptyList).size());
+        Assert.assertEquals(0, (int) Collections.foldr(MY_SUBTRACT, 0, emptyList));
+        Assert.assertEquals(0, (int) Collections.foldl(MY_SUBTRACT, 0, emptyList));
     }
 
     @Test
     public void testFoldlConcat() {
         final String init = "Hello";
-        Integer[] numArr = numbers.toArray(new Integer[numbers.size()]);
+        Integer[] numArr = distinctNumbers.toArray(new Integer[distinctNumbers.size()]);
 
         Function2<String, Integer, String> fun = new Function2<String, Integer, String>() {
             @Override
@@ -156,13 +158,14 @@ public class CollectionsTest {
             sb.append(n % 2);
         }
         String actual = Collections.foldl(fun, init, Arrays.asList(numArr));
+
         Assert.assertEquals(sb.toString(), actual);
     }
 
     @Test
     public void testFoldrConcat() {
         final String init = "Hello";
-        Integer[] numArr = numbers.toArray(new Integer[numbers.size()]);
+        Integer[] numArr = distinctNumbers.toArray(new Integer[distinctNumbers.size()]);
 
         Function2<Integer, String, String> fun = new Function2<Integer, String, String>() {
             @Override

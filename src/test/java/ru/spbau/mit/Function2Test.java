@@ -63,6 +63,6 @@ public class Function2Test {
 
     @Test
     public void testCompose() {
-        Assert.assertEquals(MY_SUBTRACT.compose(TO_STR).apply(a, b), Integer.toString(a - b));
+        Assert.assertEquals(Integer.toString(a - b), MY_SUBTRACT.compose(TO_STR).apply(a, b));
     }
 }

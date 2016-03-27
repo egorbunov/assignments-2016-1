@@ -42,6 +42,6 @@ public class Function1Test {
     @Test
     public void testSignatureIsFlexible() {
         String str = String.valueOf(random.nextInt());
-        Assert.assertEquals(PARSE_INT.compose(TO_STR).apply(str), str);
+        Assert.assertEquals(str, PARSE_INT.compose(TO_STR).apply(str));
     }
 }

@@ -27,6 +27,13 @@ public class PredicateTest {
         }
     };
 
+    private static final Predicate<Object> EXCEPTION_PRED = new Predicate<Object>() {
+        @Override
+        public Boolean apply(Object o) {
+            throw new RuntimeException("Exception throwing predicate was applied.");
+        }
+    };
+
     private int[] numbers;
 
     @Before
@@ -68,6 +75,11 @@ public class PredicateTest {
     }
 
     @Test
+    public void testOrIsLazy() {
+        Predicate.ALWAYS_TRUE.or(EXCEPTION_PRED).apply(null);
+    }
+
+    @Test
     public void testAnd() {
         Predicate<Integer> noOneNum = IS_EVEN.and(IS_ODD);
         Predicate<Object> noOne = Predicate.ALWAYS_FALSE.and(Predicate.ALWAYS_TRUE);
@@ -76,6 +88,11 @@ public class PredicateTest {
             Assert.assertFalse(noOneNum.apply(n));
             Assert.assertFalse(noOne.apply(n));
         }
+    }
+
+    @Test
+    public void testAndIsLazy() {
+        Predicate.ALWAYS_FALSE.and(EXCEPTION_PRED).apply(null);
     }
 
     @Test
