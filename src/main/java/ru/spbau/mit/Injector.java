@@ -34,6 +34,11 @@ public final class Injector {
         if (visited.contains(clazz.getName())) {
             return true;
         }
+        for (Class<?> x : clazz.getInterfaces()) {
+            if (visited.contains(x.getName())) {
+                return true;
+            }
+        }
         return false;
     }
 
