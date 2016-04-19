@@ -25,9 +25,6 @@ public final class Injector {
 
     private static void setVisited(Class<?> clazz) {
         visited.add(clazz.getName());
-        for (Class<?> x : clazz.getInterfaces()) {
-            visited.add(x.getName());
-        }
         Class<?> cur = clazz.getSuperclass();
         while (cur != null) {
             visited.add(cur.getName());
@@ -35,7 +32,21 @@ public final class Injector {
         }
     }
 
-    private static void setInstanse(Class<?> clazz, Object obj) {
+    private static boolean checkVisited(Class<?> clazz) {
+        if (visited.contains(clazz.getName())) {
+            return true;
+        }
+        Class<?> cur = clazz.getSuperclass();
+        while (cur != null) {
+            if (visited.contains(cur.getName())) {
+                return true;
+            }
+            cur = cur.getSuperclass();
+        }
+        return false;
+    }
+
+    private static void setInstance(Class<?> clazz, Object obj) {
         depInstances.put(clazz.getName(), obj);
         for (Class<?> x : clazz.getInterfaces()) {
             depInstances.put(x.getName(), obj);
@@ -49,7 +60,7 @@ public final class Injector {
 
     private static Object getDependency(Class<?> depClass, List<String> implClsNames) throws Exception {
         // detecting cycle
-        if (visited.contains(depClass.getName())) {
+        if (checkVisited(depClass)) {
             throw new InjectionCycleException();
         }
 
@@ -83,8 +94,8 @@ public final class Injector {
         Class<?>[] pTypes = constructor.getParameterTypes();
         if (pTypes.length == 0) {
             Object inst = constructor.newInstance();
-            setInstanse(depClass, inst);
-            setInstanse(forInstantiation, inst);
+            setInstance(depClass, inst);
+            setInstance(forInstantiation, inst);
             return inst;
         }
 
@@ -95,8 +106,8 @@ public final class Injector {
         }
 
         Object inst = constructor.newInstance(params);
-        setInstanse(depClass, inst);
-        setInstanse(forInstantiation, inst);
+        setInstance(depClass, inst);
+        setInstance(forInstantiation, inst);
 
         return inst;
     }
