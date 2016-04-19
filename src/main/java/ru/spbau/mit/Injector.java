@@ -23,6 +23,30 @@ public final class Injector {
         visited = new HashSet<>();
     }
 
+    private static void setVisited(Class<?> clazz) {
+        visited.add(clazz.getName());
+        for (Class<?> x : clazz.getInterfaces()) {
+            visited.add(x.getName());
+        }
+        Class<?> cur = clazz.getSuperclass();
+        while (cur != null) {
+            visited.add(cur.getName());
+            cur = cur.getSuperclass();
+        }
+    }
+
+    private static void setInstanse(Class<?> clazz, Object obj) {
+        depInstances.put(clazz.getName(), obj);
+        for (Class<?> x : clazz.getInterfaces()) {
+            depInstances.put(x.getName(), obj);
+        }
+        Class<?> cur = clazz.getSuperclass();
+        while (cur != null) {
+            depInstances.put(cur.getName(), obj);
+            cur = cur.getSuperclass();
+        }
+    }
+
     private static Object getDependency(Class<?> depClass, List<String> implClsNames) throws Exception {
         // detecting cycle
         if (visited.contains(depClass.getName())) {
@@ -30,7 +54,7 @@ public final class Injector {
         }
 
         // marking, that this call is for instantiation depClass
-        visited.add(depClass.getName());
+        setVisited(depClass);
 
         // if already instantiated, when return
         if (depInstances.containsKey(depClass.getName())) {
@@ -59,7 +83,8 @@ public final class Injector {
         Class<?>[] pTypes = constructor.getParameterTypes();
         if (pTypes.length == 0) {
             Object inst = constructor.newInstance();
-            depInstances.put(depClass.getName(), inst);
+            setInstanse(depClass, inst);
+            setInstanse(forInstantiation, inst);
             return inst;
         }
 
@@ -69,12 +94,11 @@ public final class Injector {
             params[i] = getDependency(type, implClsNames);
         }
 
-        Object obj = constructor.newInstance(params);
+        Object inst = constructor.newInstance(params);
+        setInstanse(depClass, inst);
+        setInstanse(forInstantiation, inst);
 
-        // putting for name of initial dependency (may be interface)
-        depInstances.put(depClass.getName(), obj);
-
-        return obj;
+        return inst;
     }
 
     /**
