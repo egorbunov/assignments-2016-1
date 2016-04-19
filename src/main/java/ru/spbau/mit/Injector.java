@@ -26,7 +26,7 @@ public final class Injector {
     private static void setVisited(Class<?> clazz) {
         visited.add(clazz.getName());
         Class<?> cur = clazz.getSuperclass();
-        while (cur != null) {
+        while (cur != null && cur != Object.class) {
             visited.add(cur.getName());
             cur = cur.getSuperclass();
         }
@@ -37,7 +37,7 @@ public final class Injector {
             return true;
         }
         Class<?> cur = clazz.getSuperclass();
-        while (cur != null) {
+        while (cur != null && cur != Object.class) {
             if (visited.contains(cur.getName())) {
                 return true;
             }
