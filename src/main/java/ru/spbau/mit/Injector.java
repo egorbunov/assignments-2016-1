@@ -11,6 +11,9 @@ public final class Injector {
     private static HashMap<String, Object> depInstances;
     private static HashSet<String> visited;
 
+    private Injector() {
+    }
+
     private static void reset() {
         depInstances = new HashMap<>();
         resetVisited();
@@ -20,10 +23,7 @@ public final class Injector {
         visited = new HashSet<>();
     }
 
-    private Injector() {
-    }
-
-    private static Object getDependency(Class<?> depClass, List<String> implementationClassNames) throws Exception {
+    private static Object getDependency(Class<?> depClass, List<String> implClsNames) throws Exception {
         // detecting cycle
         if (visited.contains(depClass.getName())) {
             throw new InjectionCycleException();
@@ -39,7 +39,7 @@ public final class Injector {
 
         // getting class candidates for inst
         List<Class<?>> candidates = new ArrayList<>();
-        for (String s : implementationClassNames) {
+        for (String s : implClsNames) {
             Class<?> aClass = Class.forName(s);
             if (depClass.isAssignableFrom(aClass)) {
                 candidates.add(aClass);
@@ -66,7 +66,7 @@ public final class Injector {
         Object[] params = new Object[pTypes.length];
         for (int i = 0; i < params.length; i++) {
             Class<?> type = pTypes[i];
-            params[i] = getDependency(type, implementationClassNames);
+            params[i] = getDependency(type, implClsNames);
         }
 
         Object obj = constructor.newInstance(params);
