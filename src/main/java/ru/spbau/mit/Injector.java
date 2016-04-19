@@ -25,23 +25,14 @@ public final class Injector {
 
     private static void setVisited(Class<?> clazz) {
         visited.add(clazz.getName());
-        Class<?> cur = clazz.getSuperclass();
-        while (cur != null && cur != Object.class) {
-            visited.add(cur.getName());
-            cur = cur.getSuperclass();
+        for (Class<?> x : clazz.getInterfaces()) {
+            visited.add(x.getName());
         }
     }
 
     private static boolean checkVisited(Class<?> clazz) {
         if (visited.contains(clazz.getName())) {
             return true;
-        }
-        Class<?> cur = clazz.getSuperclass();
-        while (cur != null && cur != Object.class) {
-            if (visited.contains(cur.getName())) {
-                return true;
-            }
-            cur = cur.getSuperclass();
         }
         return false;
     }
@@ -50,11 +41,6 @@ public final class Injector {
         depInstances.put(clazz.getName(), obj);
         for (Class<?> x : clazz.getInterfaces()) {
             depInstances.put(x.getName(), obj);
-        }
-        Class<?> cur = clazz.getSuperclass();
-        while (cur != null) {
-            depInstances.put(cur.getName(), obj);
-            cur = cur.getSuperclass();
         }
     }
 
@@ -126,8 +112,7 @@ public final class Injector {
         Object[] params = new Object[parameterTypes.length];
         for (int i = 0; i < params.length; ++i) {
             resetVisited();
-            // for preventing cycle dependencies on root class
-            setVisited(clazz);
+            setVisited(clazz); // for preventing cycle dependencies on root class
             params[i] = getDependency(parameterTypes[i], implementationClassNames);
         }
 
