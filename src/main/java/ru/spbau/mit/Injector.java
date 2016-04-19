@@ -123,12 +123,11 @@ public final class Injector {
         Constructor<?> constructor = clazz.getConstructors()[0];
         Class<?>[] parameterTypes = constructor.getParameterTypes();
 
-        // for preventing cycle dependencies on root class
-        visited.add(clazz.getName());
-
         Object[] params = new Object[parameterTypes.length];
         for (int i = 0; i < params.length; ++i) {
             resetVisited();
+            // for preventing cycle dependencies on root class
+            setVisited(clazz);
             params[i] = getDependency(parameterTypes[i], implementationClassNames);
         }
 
