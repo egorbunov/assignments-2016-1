@@ -30,8 +30,9 @@ public final class Injector {
 
     private static boolean checkVisited(Class<?> clazz) throws Exception {
         for (String s : visited) {
-            if (clazz.isAssignableFrom(Class.forName(s)))
+            if (clazz.isAssignableFrom(Class.forName(s))) {
                 return true;
+            }
         }
         for (Class<?> x : clazz.getInterfaces()) {
             if (visited.contains(x.getName())) {
