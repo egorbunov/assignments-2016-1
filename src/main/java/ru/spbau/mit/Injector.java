@@ -1,10 +1,7 @@
 package ru.spbau.mit;
 
 import java.lang.reflect.Constructor;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 
 public final class Injector {
@@ -28,11 +25,13 @@ public final class Injector {
         for (Class<?> x : clazz.getInterfaces()) {
             visited.add(x.getName());
         }
+
     }
 
-    private static boolean checkVisited(Class<?> clazz) {
-        if (visited.contains(clazz.getName())) {
-            return true;
+    private static boolean checkVisited(Class<?> clazz) throws Exception {
+        for (String s : visited) {
+            if (clazz.isAssignableFrom(Class.forName(s)))
+                return true;
         }
         for (Class<?> x : clazz.getInterfaces()) {
             if (visited.contains(x.getName())) {
@@ -44,9 +43,6 @@ public final class Injector {
 
     private static void setInstance(Class<?> clazz, Object obj) {
         depInstances.put(clazz.getName(), obj);
-        for (Class<?> x : clazz.getInterfaces()) {
-            depInstances.put(x.getName(), obj);
-        }
     }
 
     private static Object getDependency(Class<?> depClass, List<String> implClsNames) throws Exception {
@@ -59,8 +55,10 @@ public final class Injector {
         setVisited(depClass);
 
         // if already instantiated, when return
-        if (depInstances.containsKey(depClass.getName())) {
-            return depInstances.get(depClass.getName());
+        for (Map.Entry<String, Object> entry : depInstances.entrySet()) {
+            if (depClass.isInstance(entry.getValue())) {
+                return entry.getValue();
+            }
         }
 
         // getting class candidates for inst
