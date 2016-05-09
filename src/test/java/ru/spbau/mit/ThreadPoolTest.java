@@ -6,6 +6,7 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Random;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -108,19 +109,20 @@ public class ThreadPoolTest {
         }
     }
 
-    private class LoopTask implements Supplier<Integer> {
-        @Override
-        public Integer get() {
-            int res = 0;
-            for (long i = 0; i < 10000000000L; ++i) {
-                res += i;
-            }
-            return res;
-        }
-    }
 
     @Test
     public void shutdownTest2() throws InterruptedException {
+        class LoopTask implements Supplier<Integer> {
+            @Override
+            public Integer get() {
+                int res = 0;
+                for (long i = 0; i < 10000000000L; ++i) {
+                    res += i;
+                }
+                return res;
+            }
+        }
+
         ThreadPool pool = new ThreadPoolImpl(10);
         ArrayList<LightFuture<Integer>> futures = new ArrayList<>();
         for (int i = 0; i < 5; ++i) {
@@ -130,6 +132,9 @@ public class ThreadPoolTest {
     }
 
 
+    /**
+     * Tests if at least all workers are used...
+     */
     @Test
     public void testAllWorkersDoWork() throws LightExecutionException, InterruptedException {
         final HashSet<Long> visitors = new HashSet<>();
@@ -156,5 +161,39 @@ public class ThreadPoolTest {
         }
 
         Assert.assertEquals(n, visitors.size());
+    }
+
+    @Test
+    public void testThenApply() throws LightExecutionException, InterruptedException {
+        int n = 5;
+        int m = 15;
+        ThreadPool pool = new ThreadPoolImpl(n);
+        int[] numbers = new Random().ints(m, 1, 1000).toArray();
+        ArrayList<LightFuture<String>> futures = new ArrayList<>();
+        for (int i = 0; i < m; ++i) {
+            futures.add(pool.submit(new UselessTask<>(Integer.toString(i), numbers[i], 200))
+                    .thenApply(Object::toString));
+        }
+        for (int i = 0; i < m; ++i) {
+            Assert.assertEquals(Integer.toString(numbers[i]), futures.get(i).get());
+        }
+    }
+
+    @Test
+    public void testDeepThenApply() throws LightExecutionException, InterruptedException {
+        int n = 5;
+        int m = 15;
+        ThreadPool pool = new ThreadPoolImpl(n);
+        int[] numbers = new Random().ints(m, 1, 1000).toArray();
+        ArrayList<LightFuture> futures = new ArrayList<>();
+        for (int i = 0; i < m; ++i) {
+            futures.add(pool.submit(new UselessTask<>(Integer.toString(i), numbers[i], 200))
+                    .thenApply(Function.identity())
+                    .thenApply(Function.identity())
+                    .thenApply(Function.identity()));
+        }
+        for (int i = 0; i < m; ++i) {
+            Assert.assertEquals(numbers[i], (int) futures.get(i).get());
+        }
     }
 }
