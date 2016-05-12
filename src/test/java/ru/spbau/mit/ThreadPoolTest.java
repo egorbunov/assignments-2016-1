@@ -166,7 +166,7 @@ public class ThreadPoolTest {
     }
 
     @Test
-    public void testThenApply() throws LightExecutionException, InterruptedException {
+    public void testThenApplySimple() throws LightExecutionException, InterruptedException {
         int n = 5;
         int m = 15;
         ThreadPool pool = new ThreadPoolImpl(n);
@@ -189,7 +189,7 @@ public class ThreadPoolTest {
         int[] numbers = new Random().ints(m, 1, 1000).toArray();
         ArrayList<LightFuture> futures = new ArrayList<>();
         for (int i = 0; i < m; ++i) {
-            futures.add(pool.submit(new UselessTask<>(Integer.toString(i), numbers[i], 200))
+            futures.add(pool.submit(new UselessTask<>(Integer.toString(i), numbers[i], 500))
                     .thenApply(Function.identity())
                     .thenApply(Function.identity())
                     .thenApply(Function.identity()));
@@ -197,5 +197,30 @@ public class ThreadPoolTest {
         for (int i = 0; i < m; ++i) {
             Assert.assertEquals(numbers[i], (int) futures.get(i).get());
         }
+    }
+
+    @Test
+    public void testTimeCostThenApply() throws LightExecutionException, InterruptedException {
+        ThreadPool pool = new ThreadPoolImpl(5);
+        LightFuture<Integer> f = pool.submit(new UselessTask<>("1", 10, 500)).thenApply(
+                x -> {
+                    try {
+                        Thread.sleep(500);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    return 2 * x;
+                }
+        );
+        Assert.assertEquals(20, (int) f.get());
+    }
+
+    @Test(expected = LightExecutionException.class)
+    public void testThenApplyException() throws LightExecutionException, InterruptedException {
+        ThreadPool pool = new ThreadPoolImpl(5);
+        LightFuture<Integer> f = pool.submit(new UselessTask<>("1", 10, 500)).thenApply(
+                x -> { throw new IllegalStateException("=)"); }
+        );
+        f.get();
     }
 }
