@@ -1,5 +1,6 @@
 package ru.spbau.mit;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -55,38 +56,6 @@ public class ThreadPoolImpl implements ThreadPool {
     }
 
     /**
-     * Future, which depends on some another future and which result is
-     * just transformed result of that dependency future evaluation
-     * @param <R> Future result type
-     * @param <T> Dependent future result type
-     */
-    private class DependentFuture<R, T> implements LightFuture<R> {
-        private final Function<? super T, ? extends R> transformer;
-        private final LightFuture<T> dependency;
-
-        DependentFuture(Function<? super T, ? extends R> transformer,
-                        LightFuture<T> dependency) {
-            this.transformer = transformer;
-            this.dependency = dependency;
-        }
-
-        @Override
-        public boolean isReady() {
-            return dependency.isReady();
-        }
-
-        @Override
-        public R get() throws LightExecutionException, InterruptedException {
-            return transformer.apply(dependency.get());
-        }
-
-        @Override
-        public <U> LightFuture<U> thenApply(Function<? super R, ? extends U> f) {
-            return new DependentFuture<>(f, this);
-        }
-    }
-
-    /**
      * Future, which scheduled by ThreadPoolImpl
      * @param <R> Future result type
      */
@@ -95,6 +64,7 @@ public class ThreadPoolImpl implements ThreadPool {
         private volatile boolean ready = false;
         private R result = null;
         private Throwable executionException = null;
+        private ArrayList<Future> dependentTasks = new ArrayList<>();
 
         Future(Supplier<R> supplier) {
             work = supplier;
@@ -111,7 +81,15 @@ public class ThreadPoolImpl implements ThreadPool {
 
         private synchronized void setReady() {
             ready = true;
+            flushDependentTasksToQueue();
             notifyAll();
+        }
+
+        private void flushDependentTasksToQueue() {
+            synchronized (ThreadPoolImpl.this.taskQueue) {
+                ThreadPoolImpl.this.taskQueue.addAll(dependentTasks);
+                dependentTasks.clear();
+            }
         }
 
         @Override
@@ -122,31 +100,45 @@ public class ThreadPoolImpl implements ThreadPool {
         @Override
         public R get() throws LightExecutionException, InterruptedException {
             synchronized (this) {
-                while (!isReady()) {
+                while (!ready) {
                     wait();
                 }
             }
-
             if (executionException != null) {
                 throw new LightExecutionException(executionException);
             }
-
             return result;
         }
 
         @Override
         public <U> LightFuture<U> thenApply(Function<? super R, ? extends U> f) {
-            return new DependentFuture<>(f, this);
+            Future<U> dependentTask = new Future<>(() -> {
+                if (!ready) {
+                    throw new IllegalStateException("Result already must be ready!");
+                }
+                return f.apply(result);
+            });
+            dependentTasks.add(dependentTask);
+
+            if (ready) {
+                flushDependentTasksToQueue();
+            }
+
+            return dependentTask;
+        }
+    }
+
+    private <R> void addFutureTask(Future<R> future) {
+        synchronized (taskQueue) {
+            taskQueue.addLast(future);
+            taskQueue.notifyAll();
         }
     }
 
     @Override
     public <R> LightFuture<R> submit(Supplier<R> supplier) {
         Future<R> future = new Future<>(supplier);
-        synchronized (taskQueue) {
-            taskQueue.addLast(future);
-            taskQueue.notifyAll();
-        }
+        addFutureTask(future);
         return future;
     }
 

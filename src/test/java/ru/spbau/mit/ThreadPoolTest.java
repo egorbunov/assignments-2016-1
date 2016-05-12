@@ -31,10 +31,12 @@ public class ThreadPoolTest {
         @Override
         public T get() {
             try {
+//                System.out.println(name + " is working!");
                 Thread.sleep(sleepMs);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
+//            System.out.println(name + " end working!");
             return result;
         }
     }
