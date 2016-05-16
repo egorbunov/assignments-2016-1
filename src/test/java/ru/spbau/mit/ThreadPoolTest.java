@@ -31,12 +31,10 @@ public class ThreadPoolTest {
         @Override
         public T get() {
             try {
-//                System.out.println(name + " is working!");
                 Thread.sleep(sleepMs);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
-//            System.out.println(name + " end working!");
             return result;
         }
     }
@@ -67,6 +65,15 @@ public class ThreadPoolTest {
                 }
             }
         }
+    }
+
+    @Test
+    public void testIsReady() throws LightExecutionException, InterruptedException {
+        ThreadPool pool = new ThreadPoolImpl(10);
+        LightFuture<Integer> f = pool.submit(new UselessTask<>("1", 100, 500));
+        Assert.assertFalse(f.isReady());
+        f.get();
+        Assert.assertTrue(f.isReady());
     }
 
     @Test
@@ -196,6 +203,7 @@ public class ThreadPoolTest {
         }
         for (int i = 0; i < m; ++i) {
             Assert.assertEquals(numbers[i], (int) futures.get(i).get());
+            Assert.assertTrue(futures.get(i).isReady());
         }
     }
 

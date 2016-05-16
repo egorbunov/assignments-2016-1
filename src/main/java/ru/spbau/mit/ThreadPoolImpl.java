@@ -2,56 +2,42 @@ package ru.spbau.mit;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class ThreadPoolImpl implements ThreadPool {
     private volatile boolean isWorking = true;
-    private final LinkedList<Future> taskQueue = new LinkedList<>();
-    private Thread[] workers;
+    private final Queue<Future> taskQueue = new LinkedList<>();
+    private final List<Thread> workers = new ArrayList<>();
 
     public ThreadPoolImpl(int n) {
-        workers = new Thread[n];
         for (int i = 0; i < n; ++i) {
-            workers[i] = new Thread(new RunnableWorker(i));
-            workers[i].start();
+            Thread thread = new Thread(this::workerRoutine);
+            workers.add(thread);
+            thread.start();
         }
     }
 
-    private void recreateWorker(int id) {
-        workers[id] = new Thread(new RunnableWorker(id));
-        workers[id].start();
-    }
-
-    private class RunnableWorker implements Runnable {
-        private final int id;
-
-        RunnableWorker(int id) {
-            this.id = id;
-        }
-
-        @Override
-        public void run() {
-            while (isWorking) {
-                Future future;
-                synchronized (taskQueue) {
-                    while (taskQueue.isEmpty()) {
-                        try {
-                            taskQueue.wait();
-                        } catch (InterruptedException e) {
-                            if (isWorking) {
-                                recreateWorker(id);
-                            }
-                            Thread.currentThread().interrupt();
+    private void workerRoutine() {
+        while (isWorking) {
+            Future future;
+            synchronized (taskQueue) {
+                while (taskQueue.isEmpty()) {
+                    try {
+                        taskQueue.wait();
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        if (!isWorking) {
                             return;
                         }
                     }
-
-                    future = taskQueue.removeFirst();
                 }
-                // Working...
-                future.doWork();
+                future = taskQueue.poll();
             }
+            // Working...
+            future.doWork();
         }
     }
 
@@ -64,7 +50,7 @@ public class ThreadPoolImpl implements ThreadPool {
         private volatile boolean ready = false;
         private R result = null;
         private Throwable executionException = null;
-        private ArrayList<Future> dependentTasks = new ArrayList<>();
+        private List<Future> dependentTasks = new ArrayList<>();
 
         Future(Supplier<R> supplier) {
             work = supplier;
@@ -130,7 +116,7 @@ public class ThreadPoolImpl implements ThreadPool {
 
     private <R> void addFutureTask(Future<R> future) {
         synchronized (taskQueue) {
-            taskQueue.addLast(future);
+            taskQueue.add(future);
             taskQueue.notifyAll();
         }
     }
@@ -145,8 +131,6 @@ public class ThreadPoolImpl implements ThreadPool {
     @Override
     public void shutdown() {
         isWorking = false;
-        for (Thread worker : workers) {
-            worker.interrupt();
-        }
+        workers.forEach(Thread::interrupt);
     }
 }
