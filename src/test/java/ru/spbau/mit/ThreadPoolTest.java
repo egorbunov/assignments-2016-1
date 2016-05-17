@@ -2,14 +2,10 @@ package ru.spbau.mit;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.junit.internal.ExactComparisonCriteria;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Random;
-import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.Exchanger;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -146,26 +142,24 @@ public class ThreadPoolTest {
 
 
     /**
-     * Tests if at least all workers are used...
+     * Tests if at least n workers are used...
      */
     @Test
     public void testAllWorkersDoWork() throws LightExecutionException, InterruptedException {
         int n = 5;
         CyclicBarrier barrier = new CyclicBarrier(n);
 
-        Supplier<Void> waitingSupplier = () -> {
-            try {
-                barrier.await();
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-            return null;
-        };
-
         ThreadPool pool = new ThreadPoolImpl(n);
         ArrayList<LightFuture> futures = new ArrayList<>();
         for (int i = 0; i < n; ++i) {
-            futures.add(pool.submit(waitingSupplier));
+            futures.add(pool.submit((Supplier<Void>) () -> {
+                try {
+                    barrier.await();
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+                return null;
+            }));
         }
 
         for (LightFuture f : futures) {
