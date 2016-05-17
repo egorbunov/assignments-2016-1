@@ -2,10 +2,14 @@ package ru.spbau.mit;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.internal.ExactComparisonCriteria;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Random;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.Exchanger;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -146,30 +150,27 @@ public class ThreadPoolTest {
      */
     @Test
     public void testAllWorkersDoWork() throws LightExecutionException, InterruptedException {
-        final HashSet<Long> visitors = new HashSet<>();
-        Supplier<Void> curiousSupplier = () -> {
+        int n = 5;
+        CyclicBarrier barrier = new CyclicBarrier(n);
+
+        Supplier<Void> waitingSupplier = () -> {
             try {
-                Thread.sleep(100);
-            } catch (InterruptedException ignored) {
-            }
-            synchronized (visitors) {
-                visitors.add(Thread.currentThread().getId());
+                barrier.await();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
             }
             return null;
         };
 
-        int n = 5;
-        int m = 15;
         ThreadPool pool = new ThreadPoolImpl(n);
         ArrayList<LightFuture> futures = new ArrayList<>();
-        for (int i = 0; i < m; ++i) {
-            futures.add(pool.submit(curiousSupplier));
+        for (int i = 0; i < n; ++i) {
+            futures.add(pool.submit(waitingSupplier));
         }
+
         for (LightFuture f : futures) {
             f.get();
         }
-
-        Assert.assertEquals(n, visitors.size());
     }
 
     @Test
